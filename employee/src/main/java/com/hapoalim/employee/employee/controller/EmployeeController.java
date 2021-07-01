@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 telling java to treat this as a controller - which has mappings, and parsed as responseBody.
 the controller has a repository attribute, where we keep all the employees.
 the mappings and methods are simple, nothing to add.
+* to add validation to the rest requests, I'll just add @Valid before @RequestBody for each request.
 */
 
 @RestController
@@ -50,10 +51,10 @@ public class EmployeeController {
     // Single item
 
     @GetMapping("/employees/{id}")
-    EntityModel<Employee> one(@PathVariable Long id) {
+    EntityModel<Employee> one(@Valid @PathVariable Long id) {
 
         Employee employee = repository.findById(id) //
-                .orElseThrow(() -> new EmployeeNotFoundException(id));
+                .orElseThrow(() -> new EmployeeNotFoundException());
 
         return EntityModel.of(employee, //
                 linkTo(methodOn(EmployeeController.class).one(id)).withSelfRel(),
@@ -64,7 +65,7 @@ public class EmployeeController {
     // and if it's not here
     // - orElseGet...
     @PutMapping("/employees/{id}")
-    Employee replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
+    Employee replaceEmployee(@Valid @RequestBody Employee newEmployee, @PathVariable Long id) {
 
         return repository.findById(id).map(employee -> {
             employee.setName(newEmployee.getName());
@@ -78,7 +79,7 @@ public class EmployeeController {
 
     // query params are inside {} in java.
     @DeleteMapping("/employees/{id}")
-    void deleteEmployee(@PathVariable Long id) {
+    void deleteEmployee(@Valid @PathVariable Long id) {
         repository.deleteById(id);
     }
 
