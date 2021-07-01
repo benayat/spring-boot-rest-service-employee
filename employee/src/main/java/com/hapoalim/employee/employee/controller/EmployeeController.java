@@ -8,11 +8,12 @@ import com.hapoalim.employee.employee.repository.EmployeeRepository;
 import com.hapoalim.employee.employee.exception.EmployeeNotFoundException;
 import com.hapoalim.employee.employee.model.Employee;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /* problem with spring hetaoas - it didn't recognize linkTo and methodOn methods, 
 so I had to go with a walkaround:"https://stackoverflow.com/questions/53869415/the-sts-couldnt-understand-my-hateoas-import-and-report-error" */
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
-import org.springframework.hateoas.EntityModel;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,44 +30,71 @@ the mappings and methods are simple, nothing to add.
 
 @RestController
 public class EmployeeController {
+    private static Logger logger = LoggerFactory.getLogger(EmployeeController.class);
+
     private final EmployeeRepository repository;
 
+    // constructor - just populates the member field repository.
     EmployeeController(EmployeeRepository repository) {
         this.repository = repository;
     }
 
-    // Aggregate root
-    // tag::get-aggregate-root[]
-    @GetMapping("/employees")
-    List<Employee> all() {
-        return repository.findAll();
-    }
-    // end::get-aggregate-root[]
+    /*
+     * method: getAll: returns a List of all the employees currently in the
+     * repository.
+     */
+    @GetMapping(value = "/employees")
+    List<Employee> getAll() {
+        List<Employee> allEmployees = repository.findAll();
+        return allEmployees;
 
+    }
+
+    // throws IllegalArgumentException if there's a problem with the input.
+    /*
+     * method: addNewEmployee: self explanatory.
+     * 
+     * @params: the new employee.
+     * 
+     * @validation: checks the employee with the validators from the employee class.
+     * 
+     */
     @PostMapping("/employees")
-    Employee newEmployee(@Valid @RequestBody Employee newEmployee) {
+    Employee addNewEmployee(@Valid @RequestBody Employee newEmployee) {
+        logger.info("adding a new employee");
         return repository.save(newEmployee);
     }
 
     // Single item
-
+    // throws IllegalArgumentException if id is null.
+    /*
+     * method: getOne: returns an employee bi id.
+     * 
+     * @params: id - a path parameter.
+     * 
+     * @validation: if it's null - it will throw IllegalArgumentException.
+     * 
+     * @return: the employee if found, or the custom error
+     * EmployeeNotFoundException.
+     */
     @GetMapping("/employees/{id}")
-    EntityModel<Employee> one(@Valid @PathVariable Long id) {
-
-        Employee employee = repository.findById(id) //
+    Employee getOne(@Valid @PathVariable Long id) {
+        return repository.findById(id) //
                 .orElseThrow(() -> new EmployeeNotFoundException());
 
-        return EntityModel.of(employee, //
-                linkTo(methodOn(EmployeeController.class).one(id)).withSelfRel(),
-                linkTo(methodOn(EmployeeController.class).all()).withRel("employees"));
     }
 
-    // orElseGet - reminds me of pythons while-else. in this case - return a value,
-    // and if it's not here
-    // - orElseGet...
+    /*
+     * method: replaceEmployee: PUT method to update an employee, or create a new
+     * one if he doesn't exist.
+     * 
+     * @params: id - path parameter.
+     * 
+     * @return: the new/updated employee.
+     */
     @PutMapping("/employees/{id}")
     Employee replaceEmployee(@Valid @RequestBody Employee newEmployee, @PathVariable Long id) {
-
+        logger.info("replacing employee " + newEmployee);
         return repository.findById(id).map(employee -> {
             employee.setName(newEmployee.getName());
             employee.setRole(newEmployee.getRole());
@@ -78,6 +106,11 @@ public class EmployeeController {
     }
 
     // query params are inside {} in java.
+    /*
+     * delete an employee with a given id.
+     * 
+     * @params: path param id.
+     */
     @DeleteMapping("/employees/{id}")
     void deleteEmployee(@Valid @PathVariable Long id) {
         repository.deleteById(id);
