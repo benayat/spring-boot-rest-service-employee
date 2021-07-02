@@ -2,23 +2,18 @@ package com.hapoalim.employee.employee.model;
 
 import java.util.Objects;
 
-import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.validation.constraints.Max;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
-/* 
-@entity annotation meaning that this special class can be mapped to a table.
-added validation from the built in validator to the class fields.
+import org.springframework.data.elasticsearch.annotations.Document;
 
-*/
-@Entity
+@Document(indexName = "employee")
 public class Employee {
     // @id - primary key. generated value - support generating value for the key.
-    @Max(value = 500, message = "this database is not meant for more than 500 employees")
-    private @Id @GeneratedValue Long id;
+    @Size(min = 1, max = 70, message = "please choose a role with a reasonable length")
+    private @Id @GeneratedValue String id;
     @NotEmpty(message = "please provide a name")
     @Size(min = 1, max = 30, message = "please choose a name with a reasonable length")
     private String name;
@@ -39,7 +34,7 @@ public class Employee {
     }
 
     // all g';etters and setters - for id, name and role.
-    public Long getId() {
+    public String getId() {
         return this.id;
     }
 
@@ -51,7 +46,7 @@ public class Employee {
         return this.role;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

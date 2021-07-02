@@ -1,16 +1,19 @@
 package com.hapoalim.employee.employee.repository;
 
+import java.util.List;
+
 import com.hapoalim.employee.employee.model.Employee;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.annotations.Query;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 
-/* 
-this interface will give us all the crud methods we need to use with employee:
-inheritance - it extends JpaRepository, for the functionality, so no need to implement
-any of this myself.
-<Employee> - domain type, and <Long> - Id type.
+// second try - with elasticsearch.
 
-*/
-public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+public interface EmployeeRepository extends ElasticsearchRepository<Employee, String> {
 
+    List<Employee> findByRole(String role, Pageable pageable);
+
+    @Query("{\"bool\": {\"must\": [{\"match\": {\"name\": \"?0\"}}]}}")
+    List<Employee> findByEmployeeNameUsingCustomQuery(String name, Pageable pageable);
 }

@@ -10,6 +10,7 @@ import com.hapoalim.employee.employee.model.Employee;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 
 /* problem with spring hetaoas - it didn't recognize linkTo and methodOn methods, 
 so I had to go with a walkaround:"https://stackoverflow.com/questions/53869415/the-sts-couldnt-understand-my-hateoas-import-and-report-error" */
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 /* 
 telling java to treat this as a controller - which has mappings, and parsed as responseBody.
@@ -42,15 +44,50 @@ public class EmployeeController {
     /*
      * method: getAll: returns a List of all the employees currently in the
      * repository.
+     * 
+     * @validation: throws IllegalArgumentException if there's a problem with the
+     * input.
+     * 
      */
     @GetMapping(value = "/employees")
-    List<Employee> getAll() {
-        List<Employee> allEmployees = repository.findAll();
+    Iterable<Employee> getAll() {
+        Iterable<Employee> allEmployees = repository.findAll();
         return allEmployees;
 
     }
+    /*
+     * method: getByName: returns all employees by the given name.
+     * 
+     * @params: name - a query parameter.
+     * 
+     * @validation: if it's null - it will throw IllegalArgumentException.
+     * 
+     * @return: the employees are found, or the custom error
+     * EmployeeNotFoundException.
+     */
 
-    // throws IllegalArgumentException if there's a problem with the input.
+    @GetMapping(value = "/employees/search/byname")
+    List<Employee> getByName(@Valid @RequestParam String name) {
+        return repository.findByEmployeeNameUsingCustomQuery(name, PageRequest.of(0, 10));
+    }
+
+    /*
+     * method: getOne: returns an employee bi id.
+     * 
+     * @params: id - a path parameter.
+     * 
+     * @validation: if it's null - it will throw IllegalArgumentException.
+     * 
+     * @return: the employee if found, or the custom error
+     * EmployeeNotFoundException.
+     */
+    @GetMapping("/employees/{id}")
+    Employee getOne(@Valid @PathVariable String id) {
+        return repository.findById(id) //
+                .orElseThrow(() -> new EmployeeNotFoundException());
+
+    }
+
     /*
      * method: addNewEmployee: self explanatory.
      * 
@@ -67,22 +104,6 @@ public class EmployeeController {
 
     // Single item
     // throws IllegalArgumentException if id is null.
-    /*
-     * method: getOne: returns an employee bi id.
-     * 
-     * @params: id - a path parameter.
-     * 
-     * @validation: if it's null - it will throw IllegalArgumentException.
-     * 
-     * @return: the employee if found, or the custom error
-     * EmployeeNotFoundException.
-     */
-    @GetMapping("/employees/{id}")
-    Employee getOne(@Valid @PathVariable Long id) {
-        return repository.findById(id) //
-                .orElseThrow(() -> new EmployeeNotFoundException());
-
-    }
 
     /*
      * method: replaceEmployee: PUT method to update an employee, or create a new
@@ -93,7 +114,7 @@ public class EmployeeController {
      * @return: the new/updated employee.
      */
     @PutMapping("/employees/{id}")
-    Employee replaceEmployee(@Valid @RequestBody Employee newEmployee, @PathVariable Long id) {
+    Employee replaceEmployee(@Valid @RequestBody Employee newEmployee, @PathVariable String id) {
         logger.info("replacing employee " + newEmployee);
         return repository.findById(id).map(employee -> {
             employee.setName(newEmployee.getName());
@@ -112,7 +133,7 @@ public class EmployeeController {
      * @params: path param id.
      */
     @DeleteMapping("/employees/{id}")
-    void deleteEmployee(@Valid @PathVariable Long id) {
+    void deleteEmployee(@Valid @PathVariable String id) {
         repository.deleteById(id);
     }
 
