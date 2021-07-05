@@ -36,6 +36,9 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+    environment: 
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+
     volumes:
       - type: bind
         source: ./docker-setup/config.yml

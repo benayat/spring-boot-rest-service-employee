@@ -28,8 +28,7 @@ public class Config {
         final URI uri = URI.create(stringUrl);
 
         String host = uri.getHost();
-        int port = 9200;
-        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo(host + ":" + port).build();
+        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo(host + ":9200").build();
 
         return RestClients.create(clientConfiguration).rest();
     }
