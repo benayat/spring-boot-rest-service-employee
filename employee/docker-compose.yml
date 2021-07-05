@@ -1,10 +1,14 @@
 version: '3.4'
 
 services:
-
   elasticsearch:
+    container_name: elasticsearch
     build:
       context: elasticsearch/
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
     volumes:
       - type: bind
         source: ./elasticsearch/config/elasticsearch.yml
@@ -13,25 +17,36 @@ services:
       - type: volume
         source: elasticsearch
         target: /usr/share/elasticsearch/data
-    ports:
-      - "9200:9200"
-      - "9300:9300"
     environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
-      ELASTIC_PASSWORD: changeme
-      # Use single node discovery in order to disable production mode and avoid bootstrap checks.
-      # see: https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
-      discovery.type: single-node
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ports:
+      - 9200:9200
     networks:
       - elastic
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:9200"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 7s
 
   employee:
-    depends_on:
-      - elasticsearch
     image: employee
     build:
       context: .
       dockerfile: ./Dockerfile
+    volumes:
+      - type: bind
+        source: ./docker-setup/config.yml
+        target: /usr/share/docker-config/config.yml
+        read_only: true
+    depends_on:
+      - "elasticsearch"
+    command: ["./docker-setup/wait-for-it.sh", "-t 20", "elasticsearch:9200"]
+    #     condition: service_healthy
+    ports:
+      - 8080:8080
     networks:
       - elastic
 
@@ -39,7 +54,7 @@ services:
 
 volumes:
   elasticsearch:
-
+    driver: local
 networks:
   elastic:
     driver: bridge

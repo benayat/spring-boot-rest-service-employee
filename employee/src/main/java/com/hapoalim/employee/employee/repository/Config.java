@@ -1,5 +1,8 @@
 package com.hapoalim.employee.employee.repository;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import org.elasticsearch.client.RestHighLevelClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -17,7 +20,14 @@ public class Config {
 
     @Bean
     public RestHighLevelClient client() {
-        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo("localhost:9200").build();
+        try {
+            System.out.println(InetAddress.getLocalHost());
+            System.out.println(InetAddress.getByName("elasticsearch"));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo("elasticsearch:9200")
+                .build();
 
         return RestClients.create(clientConfiguration).rest();
     }
