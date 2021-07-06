@@ -1,2 +1,0 @@
-FROM docker.elastic.co/elasticsearch/elasticsearch:7.13.2@sha256:1cecc2c7419a4f917a88c83180335bd491d623f28ac43ca7e0e69b4eca25fbd5
-EXPOSE 9200

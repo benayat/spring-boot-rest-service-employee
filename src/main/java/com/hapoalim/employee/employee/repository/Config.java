@@ -24,9 +24,8 @@ public class Config {
     @Bean
     public RestHighLevelClient client() {
         final String stringUrl = env.getProperty("ELASTICSEARCH_URL");
-        System.out.println(stringUrl);
+        System.out.println("the current host is:" + stringUrl);
         final URI uri = URI.create(stringUrl);
-
         String host = uri.getHost();
         ClientConfiguration clientConfiguration = ClientConfiguration.builder().connectedTo(host + ":9200").build();
 
