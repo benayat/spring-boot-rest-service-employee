@@ -4,17 +4,13 @@ import java.util.List;
 
 import javax.validation.Valid;
 
-import com.hapoalim.employee.employee.repository.EmployeeRepository;
-import com.hapoalim.employee.employee.exception.EmployeeNotFoundException;
 import com.hapoalim.employee.employee.model.Employee;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 
-/* problem with spring hetaoas - it didn't recognize linkTo and methodOn methods, 
-so I had to go with a walkaround:"https://stackoverflow.com/questions/53869415/the-sts-couldnt-understand-my-hateoas-import-and-report-error" */
-
+// rest http requests imports
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,22 +19,25 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+// service imporst
+import com.hapoalim.employee.employee.service.EmployeeService;
 /* 
 telling java to treat this as a controller - which has mappings, and parsed as responseBody.
 the controller has a repository attribute, where we keep all the employees.
 the mappings and methods are simple, nothing to add.
-* to add validation to the rest requests, I'll just add @Valid before @RequestBody for each request.
+* I'll handle the validation of the parameters in the employee service itself and devide concerns.
 */
 
 @RestController
 public class EmployeeController {
     private static Logger logger = LoggerFactory.getLogger(EmployeeController.class);
+    // @Inject
+    EmployeeService employeeService;
 
-    private final EmployeeRepository repository;
-
-    // constructor - just populates the member field repository.
-    EmployeeController(EmployeeRepository repository) {
-        this.repository = repository;
+    @Autowired
+    EmployeeController(EmployeeService service) {
+        this.employeeService = service;
     }
 
     /*
@@ -50,10 +49,8 @@ public class EmployeeController {
      * 
      */
     @GetMapping(value = "/employees")
-    Iterable<Employee> getAll() {
-        Iterable<Employee> allEmployees = repository.findAll();
-        return allEmployees;
-
+    Iterable<Employee> getAllEmployees() {
+        return this.employeeService.getAll();
     }
     /*
      * method: getByName: returns all employees by the given name.
@@ -68,7 +65,8 @@ public class EmployeeController {
 
     @GetMapping(value = "/employees/search/byname")
     List<Employee> getByName(@Valid @RequestParam String name) {
-        return repository.findByEmployeeNameUsingCustomQuery(name, PageRequest.of(0, 10));
+        logger.info("get employee by the name of " + name);
+        return this.employeeService.getByName(name);
     }
 
     /*
@@ -83,9 +81,8 @@ public class EmployeeController {
      */
     @GetMapping("/employees/{id}")
     Employee getOne(@Valid @PathVariable String id) {
-        return repository.findById(id) //
-                .orElseThrow(() -> new EmployeeNotFoundException());
-
+        logger.info("get the employee with an id of " + id);
+        return this.employeeService.getOne(id);
     }
 
     /*
@@ -98,8 +95,8 @@ public class EmployeeController {
      */
     @PostMapping("/employees")
     Employee addNewEmployee(@Valid @RequestBody Employee newEmployee) {
-        logger.info("adding a new employee");
-        return repository.save(newEmployee);
+        logger.info("adding a new employee: " + newEmployee);
+        return this.employeeService.addNewEmployee(newEmployee);
     }
 
     // Single item
@@ -115,15 +112,8 @@ public class EmployeeController {
      */
     @PutMapping("/employees/{id}")
     Employee replaceEmployee(@Valid @RequestBody Employee newEmployee, @PathVariable String id) {
-        logger.info("replacing employee " + newEmployee);
-        return repository.findById(id).map(employee -> {
-            employee.setName(newEmployee.getName());
-            employee.setRole(newEmployee.getRole());
-            return repository.save(employee);
-        }).orElseGet(() -> {
-            newEmployee.setId(id);
-            return repository.save(newEmployee);
-        });
+        logger.info("handling request: replacing employee " + newEmployee);
+        return this.employeeService.replaceEmployee(newEmployee, id);
     }
 
     // query params are inside {} in java.
@@ -134,17 +124,7 @@ public class EmployeeController {
      */
     @DeleteMapping("/employees/{id}")
     void deleteEmployee(@Valid @PathVariable String id) {
-        repository.deleteById(id);
+        this.employeeService.deleteEmployee(id);
     }
 
 }
-
-/*
- * JPA/repository methods I learned so far: deleteById(id) save(Employee) - just
- * like mongodb.
- * 
- * 
- * I actually think that this entity/domain and JPA is amazing. really. you can
- * actually use SQL as document based database, and all that with a native
- * implementation inside java! couldn't be more convenient.
- */

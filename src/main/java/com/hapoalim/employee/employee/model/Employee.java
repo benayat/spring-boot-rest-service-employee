@@ -2,18 +2,17 @@ package com.hapoalim.employee.employee.model;
 
 import java.util.Objects;
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 
 @Document(indexName = "employee")
 public class Employee {
     // @id - primary key. generated value - support generating value for the key.
     @Size(min = 1, max = 70, message = "please choose a role with a reasonable length")
-    private @Id @GeneratedValue String id;
+    private @Id String id;
     @NotEmpty(message = "please provide a name")
     @Size(min = 1, max = 30, message = "please choose a name with a reasonable length")
     private String name;
