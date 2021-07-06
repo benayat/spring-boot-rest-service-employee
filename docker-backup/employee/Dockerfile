@@ -7,6 +7,8 @@ FROM openjdk:16-alpine3.13
 # VOLUME /tmp
 ARG JAVA_OPTS
 ENV JAVA_OPTS=$JAVA_OPTS
+ENV ELASTICSEARCH_URL=http://elasticsearch:9200
+
 # COPY target/employee-0.0.1-SNAPSHOT.jar employee.jar
 COPY --from=MAVEN_BUILD target/employee-0.0.1-SNAPSHOT.jar employee.jar
 EXPOSE 8080
