@@ -9,6 +9,7 @@ import com.hapoalim.employee.employee.model.Employee;
 import com.hapoalim.employee.employee.repository.EmployeeRepository;
 
 import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 
 /* 
 employee service - a class to handle all bussiness logic.
@@ -18,6 +19,7 @@ clean and readable for interacting by HTTP requests.
 * to add validation to the rest requests, I'll just add @Valid before the relevant parameter name.
 
 */
+@Service
 public class EmployeeService {
 
     private final EmployeeRepository repository;
